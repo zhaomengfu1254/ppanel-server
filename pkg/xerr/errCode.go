@@ -40,13 +40,16 @@ const (
 
 // Request error
 const (
-	InvalidParams     uint32 = 400
-	TooManyRequests   uint32 = 401
-	ErrorTokenEmpty   uint32 = 40002
-	ErrorTokenInvalid uint32 = 40003
-	ErrorTokenExpire  uint32 = 40004
-	InvalidAccess     uint32 = 40005
-	InvalidCiphertext uint32 = 40006
+	InvalidParams      uint32 = 400
+	TooManyRequests    uint32 = 401
+	InvalidEmailPrefix uint32 = 40010 // 邮箱别名
+	InvalidParameters  uint32 = 40011 // 不合法的邮箱地址
+	EmailNotInWhite    uint32 = 40012 // 邮箱域名不可用
+	ErrorTokenEmpty    uint32 = 40002
+	ErrorTokenInvalid  uint32 = 40003
+	ErrorTokenExpire   uint32 = 40004
+	InvalidAccess      uint32 = 40005
+	InvalidCiphertext  uint32 = 40006
 )
 
 //coupon error
