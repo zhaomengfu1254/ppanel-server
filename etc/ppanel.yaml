@@ -1,0 +1,38 @@
+# PPanel 配置文件
+Host: "0.0.0.0"                     # 服务监听地址
+Port: 8080                          # 服务监听端口
+Debug: true                        # 是否开启调试模式（禁用后台日志）
+JwtAuth: # JWT 认证配置
+  AccessSecret: "djasijoidjfwhsdfas"                  # 访问令牌密钥（为空时随机生成）
+  AccessExpire: 604800              # 访问令牌过期时间（秒）
+Logger: # 日志配置
+  ServiceName: ""                   # 日志服务标识名称
+  Mode: "console"                   # 日志输出模式（console、file、volume）
+  Encoding: "json"                  # 日志格式（json、plain）
+  TimeFormat: "2006-01-02T15:04:05.000Z07:00"  # 自定义时间格式
+  Path: "logs"                      # 日志文件目录
+  Level: "info"                     # 日志级别（info、error、severe）
+  Compress: false                   # 是否压缩日志文件
+  KeepDays: 7                       # 日志保留天数
+  StackCooldownMillis: 100          # 堆栈日志冷却时间（毫秒）
+  MaxBackups: 3                     # 最大日志备份数
+  MaxSize: 50                       # 最大日志文件大小（MB）
+  Rotation: "daily"                 # 日志轮转策略（daily、size）
+MySQL: # MySQL 数据库配置
+  Addr: "localhost"                          # MySQL 地址（必填）
+  Username: "root"                      # MySQL 用户名（必填）
+  Password: "Abc123456"                      # MySQL 密码（必填）
+  Dbname: "ppanel"                        # MySQL 数据库名（必填）
+  Config: "charset=utf8mb4&parseTime=true&loc=Asia%2FShanghai"  # MySQL 连接参数
+  MaxIdleConns: 10                  # 最大空闲连接数
+  MaxOpenConns: 100                 # 最大打开连接数
+  LogMode: "info"                   # 日志级别（debug、error、warn、info）
+  LogZap: true                      # 是否使用 Zap 记录 SQL 日志
+  SlowThreshold: 1000               # 慢查询阈值（毫秒）
+Redis: # Redis 配置
+  Host: "localhost:6379"            # Redis 地址
+  Pass: ""                          # Redis 密码
+  DB: 2                             # Redis 数据库索引
+Administer: # 管理员登录配置
+  Email: "admin@ppanel.dev"         # 管理员登录邮箱
+  Password: "password"              # 管理员登录密码
