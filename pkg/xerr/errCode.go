@@ -59,6 +59,10 @@ const (
 	CouponAlreadyUsed       uint32 = 50002 // Coupon has already been used
 	CouponNotApplicable     uint32 = 50003 // Coupon does not match the order or conditions
 	CouponInsufficientUsage uint32 = 50004 // Coupon has insufficient remaining uses
+	CouponNotAvailable      uint32 = 50005 // 优惠券未启用
+	CouponExpired           uint32 = 50006 // 优惠券已过期
+	CouponNotStart          uint32 = 50007 // 优惠券还未到开始时间
+	CouponNotEnable         uint32 = 50008 // 优惠券还未到开始时间
 )
 
 // Subscribe

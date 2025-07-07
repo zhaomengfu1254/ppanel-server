@@ -76,14 +76,17 @@ func (l *RenewalLogic) Renewal(req *types.RenewalOrderRequest) (resp *types.Rene
 			}
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.DatabaseQueryError), "find coupon error: %v", err.Error())
 		}
-		if couponInfo.Count <= couponInfo.UsedCount {
+
+		// 修改这里：只有当Count > 0（有使用次数限制）且已用完时才返回错误
+		if couponInfo.Count > 0 && couponInfo.Count <= couponInfo.UsedCount {
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.CouponInsufficientUsage), "coupon used")
 		}
-		couponSub := tool.StringToInt64Slice(couponInfo.Subscribe)
 
+		couponSub := tool.StringToInt64Slice(couponInfo.Subscribe)
 		if len(couponSub) > 0 && !tool.Contains(couponSub, sub.Id) {
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.CouponNotApplicable), "coupon not match")
 		}
+
 		var count int64
 		err = l.svcCtx.DB.Transaction(func(tx *gorm.DB) error {
 			return tx.Model(&order.Order{}).Where("user_id = ? and coupon = ?", u.Id, req.Coupon).Count(&count).Error
@@ -92,9 +95,11 @@ func (l *RenewalLogic) Renewal(req *types.RenewalOrderRequest) (resp *types.Rene
 			l.Errorw("[Renewal] Database query error", logger.Field("error", err.Error()), logger.Field("user_id", u.Id), logger.Field("coupon", req.Coupon))
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.DatabaseQueryError), "find coupon error: %v", err.Error())
 		}
-		if count >= couponInfo.UserLimit {
+
+		if couponInfo.UserLimit > 0 && count >= couponInfo.UserLimit {
 			return nil, errors.Wrapf(xerr.NewErrCode(xerr.CouponInsufficientUsage), "coupon limit exceeded")
 		}
+
 		coupon = calculateCoupon(amount, couponInfo)
 	}
 	payment, err := l.svcCtx.PaymentModel.FindOne(l.ctx, req.Payment)

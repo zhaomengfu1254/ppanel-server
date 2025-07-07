@@ -77,3 +77,4 @@ service ppanel {
 	get /detail (GetAdsDetailRequest) returns (Ads)
 }
 
+

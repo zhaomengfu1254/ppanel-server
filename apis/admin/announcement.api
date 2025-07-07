@@ -74,3 +74,4 @@ service ppanel {
 	get /detail (GetAnnouncementRequest) returns (Announcement)
 }
 
+

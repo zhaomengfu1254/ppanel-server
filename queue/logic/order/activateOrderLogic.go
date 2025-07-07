@@ -234,6 +234,25 @@ func (l *ActivateOrderLogic) NewPurchase(ctx context.Context, orderInfo *order.O
 	if userInfo.RefererId != 0 &&
 		l.svc.Config.Invite.ReferralPercentage != 0 &&
 		(!l.svc.Config.Invite.OnlyFirstPurchase || orderInfo.IsNew) {
+
+		// 查询是否已存在佣金记录
+		var commissionLogCount int64
+		err = l.svc.DB.Model(&user.CommissionLog{}).Where("order_no = ?", orderInfo.OrderNo).Count(&commissionLogCount).Error
+		if err != nil {
+			logger.WithContext(ctx).Error("[ActivateOrderLogic] 查询佣金记录错误",
+				logger.Field("error", err.Error()),
+				logger.Field("order_no", orderInfo.OrderNo),
+			)
+		}
+
+		// 如果已存在佣金记录，则跳过佣金处理
+		if commissionLogCount > 0 {
+			logger.WithContext(ctx).Info("[ActivateOrderLogic] 已存在佣金记录，跳过佣金处理",
+				logger.Field("order_no", orderInfo.OrderNo),
+			)
+			goto updateCache
+		}
+
 		referer, err := l.svc.UserModel.FindOne(ctx, userInfo.RefererId)
 		if err != nil {
 			logger.WithContext(ctx).Error("[ActivateOrderLogic] Find referer failed",
@@ -242,8 +261,25 @@ func (l *ActivateOrderLogic) NewPurchase(ctx context.Context, orderInfo *order.O
 			)
 			goto updateCache
 		}
-		// calculate commission
-		amount := float64(orderInfo.Price) * (float64(l.svc.Config.Invite.ReferralPercentage) / 100)
+
+		// 计算实际支付金额（价格减去所有折扣）
+		actualPayment := orderInfo.Price - orderInfo.Discount - orderInfo.CouponDiscount
+		if actualPayment < 0 {
+			actualPayment = 0
+		}
+
+		// 基于实际支付金额计算佣金
+		amount := float64(actualPayment) * (float64(l.svc.Config.Invite.ReferralPercentage) / 100)
+
+		logger.WithContext(ctx).Info("[ActivateOrderLogic] 计算佣金",
+			logger.Field("original_price", orderInfo.Price),
+			logger.Field("discount", orderInfo.Discount),
+			logger.Field("coupon_discount", orderInfo.CouponDiscount),
+			logger.Field("actual_payment", actualPayment),
+			logger.Field("commission_rate", l.svc.Config.Invite.ReferralPercentage),
+			logger.Field("commission_amount", int64(amount)),
+		)
+
 		referer.Commission += int64(amount)
 		err = l.svc.UserModel.Update(ctx, referer)
 		if err != nil {
@@ -387,10 +423,29 @@ func (l *ActivateOrderLogic) Renewal(ctx context.Context, orderInfo *order.Order
 		)
 		return err
 	}
-	// handler 	commission
+	// handler commission
 	if userInfo.RefererId != 0 &&
 		l.svc.Config.Invite.ReferralPercentage != 0 &&
 		!l.svc.Config.Invite.OnlyFirstPurchase {
+
+		// 查询是否已存在佣金记录
+		var commissionLogCount int64
+		err = l.svc.DB.Model(&user.CommissionLog{}).Where("order_no = ?", orderInfo.OrderNo).Count(&commissionLogCount).Error
+		if err != nil {
+			logger.WithContext(ctx).Error("[ActivateOrderLogic] 查询佣金记录错误",
+				logger.Field("error", err.Error()),
+				logger.Field("order_no", orderInfo.OrderNo),
+			)
+		}
+
+		// 如果已存在佣金记录，则跳过佣金处理
+		if commissionLogCount > 0 {
+			logger.WithContext(ctx).Info("[ActivateOrderLogic] 已存在佣金记录，跳过佣金处理",
+				logger.Field("order_no", orderInfo.OrderNo),
+			)
+			goto sendMessage
+		}
+
 		referer, err := l.svc.UserModel.FindOne(ctx, userInfo.RefererId)
 		if err != nil {
 			logger.WithContext(ctx).Error("[ActivateOrderLogic] Find referer failed",
@@ -399,8 +454,25 @@ func (l *ActivateOrderLogic) Renewal(ctx context.Context, orderInfo *order.Order
 			)
 			goto sendMessage
 		}
-		// calculate commission
-		amount := float64(orderInfo.Price) * (float64(l.svc.Config.Invite.ReferralPercentage) / 100)
+
+		// 计算实际支付金额（价格减去所有折扣）
+		actualPayment := orderInfo.Price - orderInfo.Discount - orderInfo.CouponDiscount
+		if actualPayment < 0 {
+			actualPayment = 0
+		}
+
+		// 基于实际支付金额计算佣金
+		amount := float64(actualPayment) * (float64(l.svc.Config.Invite.ReferralPercentage) / 100)
+
+		logger.WithContext(ctx).Info("[ActivateOrderLogic] 计算佣金",
+			logger.Field("original_price", orderInfo.Price),
+			logger.Field("discount", orderInfo.Discount),
+			logger.Field("coupon_discount", orderInfo.CouponDiscount),
+			logger.Field("actual_payment", actualPayment),
+			logger.Field("commission_rate", l.svc.Config.Invite.ReferralPercentage),
+			logger.Field("commission_amount", int64(amount)),
+		)
+
 		referer.Commission += int64(amount)
 		err = l.svc.UserModel.Update(ctx, referer)
 		if err != nil {
