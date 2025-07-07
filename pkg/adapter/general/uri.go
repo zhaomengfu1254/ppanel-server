@@ -249,7 +249,8 @@ func TuicUri(data proxy.Proxy, uuid string) string {
 	tuic := data.Option.(proxy.Tuic)
 	var query = make(url.Values)
 
-	setQuery(&query, "congestion_control", "bbr")
+	setQuery(&query, "congestion_control", tuic.CongestionController)
+	setQuery(&query, "udp_relay_mode", tuic.UDPRelayMode)
 
 	if tuic.SecurityConfig.SNI != "" {
 		setQuery(&query, "sni", tuic.SecurityConfig.SNI)

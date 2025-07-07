@@ -1803,8 +1803,12 @@ type TrojanProtocol struct {
 }
 
 type Tuic struct {
-	Port           int            `json:"port" validate:"required"`
-	SecurityConfig SecurityConfig `json:"security_config"`
+	Port                 int            `json:"port" validate:"required"`
+	DisableSNI           bool           `json:"disable_sni"`
+	ReduceRtt            bool           `json:"reduce_rtt"`
+	UDPRelayMode         string         `json:"udp_relay_mode"`
+	CongestionController string         `json:"congestion_controller"`
+	SecurityConfig       SecurityConfig `json:"security_config"`
 }
 
 type UnbindOAuthRequest struct {

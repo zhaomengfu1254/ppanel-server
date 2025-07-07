@@ -2,10 +2,13 @@ package user
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/perfect-panel/server/internal/svc"
 	"github.com/perfect-panel/server/internal/types"
 	"github.com/perfect-panel/server/pkg/logger"
+	"github.com/perfect-panel/server/pkg/tool"
 	"github.com/perfect-panel/server/pkg/xerr"
 	"github.com/pkg/errors"
 )
@@ -25,6 +28,12 @@ func NewBatchDeleteUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *B
 }
 
 func (l *BatchDeleteUserLogic) BatchDeleteUser(req *types.BatchDeleteUserRequest) error {
+	isDemo := strings.ToLower(os.Getenv("PPANEL_MODE")) == "demo"
+
+	if tool.Contains(req.Ids, 2) && isDemo {
+		return errors.Wrapf(xerr.NewErrCodeMsg(503, "Demo mode does not allow deletion of the admin user"), "BatchDeleteUser failed: cannot delete admin user in demo mode")
+	}
+
 	err := l.svcCtx.UserModel.BatchDeleteUser(l.ctx, req.Ids)
 	if err != nil {
 		l.Logger.Error("[BatchDeleteUserLogic] BatchDeleteUser failed: ", logger.Field("error", err.Error()))

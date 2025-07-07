@@ -83,15 +83,29 @@ type Hysteria2 struct {
 
 // Tuic represents a Tuic proxy configuration
 type Tuic struct {
+	Port                 int            `json:"port"`
+	DisableSNI           bool           `json:"disable_sni"`
+	ReduceRtt            bool           `json:"reduce_rtt"`
+	UDPRelayMode         string         `json:"udp_relay_mode"`
+	CongestionController string         `json:"congestion_controller"`
+	SecurityConfig       SecurityConfig `json:"security_config"`
+}
+
+// AnyTLS represents an AnyTLS proxy configuration
+type AnyTLS struct {
 	Port           int            `json:"port"`
 	SecurityConfig SecurityConfig `json:"security_config"`
 }
 
 // TransportConfig represents the transport configuration for a proxy
 type TransportConfig struct {
-	Path        string `json:"path,omitempty"` // ws/httpupgrade
-	Host        string `json:"host,omitempty"`
-	ServiceName string `json:"service_name"` // grpc
+	Path                 string `json:"path,omitempty"` // ws/httpupgrade
+	Host                 string `json:"host,omitempty"`
+	ServiceName          string `json:"service_name"`          // grpc
+	DisableSNI           bool   `json:"disable_sni"`           // Disable SNI for the transport(tuic)
+	ReduceRtt            bool   `json:"reduce_rtt"`            // Reduce RTT for the transport(tuic)
+	UDPRelayMode         string `json:"udp_relay_mode"`        // UDP relay mode for the transport(tuic)
+	CongestionController string `json:"congestion_controller"` // Congestion controller for the transport(tuic)
 }
 
 // SecurityConfig represents the security configuration for a proxy

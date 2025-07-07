@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"os"
+	"strings"
 
 	"github.com/perfect-panel/server/internal/svc"
 	"github.com/perfect-panel/server/internal/types"
@@ -33,12 +35,16 @@ func (l *UpdateUserBasicInfoLogic) UpdateUserBasicInfo(req *types.UpdateUserBasi
 		return errors.Wrapf(xerr.NewErrCode(xerr.DatabaseQueryError), "Find User Error")
 	}
 
+	isDemo := strings.ToLower(os.Getenv("PPANEL_MODE")) == "demo"
+
 	tool.DeepCopy(userInfo, req)
 	if req.Avatar != "" && !tool.IsValidImageSize(req.Avatar, 1024) {
 		return errors.Wrapf(xerr.NewErrCode(xerr.ERROR), "Invalid Image Size")
 	}
 	if req.Password != "" {
-		l.Infow("[UpdateUserBasicInfoLogic] Update User Password:", logger.Field("userId", req.UserId), logger.Field("password", req.Password))
+		if userInfo.Id == 2 && isDemo {
+			return errors.Wrapf(xerr.NewErrCodeMsg(503, "Demo mode does not allow modification of the admin user password"), "UpdateUserBasicInfo failed: cannot update admin user password in demo mode")
+		}
 		userInfo.Password = tool.EncodePassWord(req.Password)
 	}
 

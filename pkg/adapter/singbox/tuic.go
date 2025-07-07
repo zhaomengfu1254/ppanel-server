@@ -31,7 +31,9 @@ func ParseTUIC(data proxy.Proxy, uuid string) (*Proxy, error) {
 			},
 			UUID:              uuid,
 			Password:          uuid,
-			CongestionControl: "bbr",
+			CongestionControl: tuic.CongestionController,
+			UDPRelayMode:      tuic.UDPRelayMode,
+			ZeroRTTHandshake:  tuic.ReduceRtt,
 		},
 	}
 	// Security options

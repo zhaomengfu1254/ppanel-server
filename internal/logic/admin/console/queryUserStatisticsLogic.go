@@ -2,6 +2,8 @@ package console
 
 import (
 	"context"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/perfect-panel/server/internal/svc"
@@ -25,6 +27,9 @@ func NewQueryUserStatisticsLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 func (l *QueryUserStatisticsLogic) QueryUserStatistics() (resp *types.UserStatisticsResponse, err error) {
+	if strings.ToLower(os.Getenv("PPANEL_MODE")) == "demo" {
+		return l.mockRevenueStatistics(), nil
+	}
 	resp = &types.UserStatisticsResponse{}
 	now := time.Now()
 	// query today user register count
@@ -67,5 +72,50 @@ func (l *QueryUserStatisticsLogic) QueryUserStatistics() (resp *types.UserStatis
 	} else {
 		resp.All.Register = allUserCount
 	}
+
+	// query all user order counts
+	allNewOrderUsers, allRenewalOrderUsers, err := l.svcCtx.OrderModel.QueryTotalUserCounts(l.ctx)
+	if err != nil {
+		l.Errorw("[QueryUserStatisticsLogic] QueryTotalUserCounts error", logger.Field("error", err.Error()))
+	} else {
+		resp.All.NewOrderUsers = allNewOrderUsers
+		resp.All.RenewalOrderUsers = allRenewalOrderUsers
+	}
 	return
+}
+
+func (l *QueryUserStatisticsLogic) mockRevenueStatistics() *types.UserStatisticsResponse {
+	now := time.Now()
+
+	// Generate daily user statistics for the past 7 days (oldest first)
+	monthlyList := make([]types.UserStatistics, 7)
+	for i := 0; i < 7; i++ {
+		dayDate := now.AddDate(0, 0, -(6 - i))
+		baseRegister := int64(18 + ((6 - i) * 3) + ((6-i)%3)*8)
+		monthlyList[i] = types.UserStatistics{
+			Date:              dayDate.Format("2006-01-02"),
+			Register:          baseRegister,
+			NewOrderUsers:     int64(float64(baseRegister) * 0.65),
+			RenewalOrderUsers: int64(float64(baseRegister) * 0.35),
+		}
+	}
+
+	return &types.UserStatisticsResponse{
+		Today: types.UserStatistics{
+			Register:          28,
+			NewOrderUsers:     18,
+			RenewalOrderUsers: 10,
+		},
+		Monthly: types.UserStatistics{
+			Register:          888,
+			NewOrderUsers:     588,
+			RenewalOrderUsers: 300,
+			List:              monthlyList,
+		},
+		All: types.UserStatistics{
+			Register:          18888,
+			NewOrderUsers:     0, // This field is not used in All statistics
+			RenewalOrderUsers: 0, // This field is not used in All statistics
+		},
+	}
 }
